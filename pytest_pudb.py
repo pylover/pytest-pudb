@@ -12,13 +12,20 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+
     pudb_wrapper = PuDBWrapper(config)
 
     if config.getvalue("usepudb"):
         config.pluginmanager.register(pudb_wrapper, 'pudb_wrapper')
 
     pudb_wrapper.mount()
-    config.add_cleanup(pudb_wrapper.unmount)
+
+    # pytest added `add_cleaup` function since v9, so keeping it backward
+    # compatible.
+    if hasattr(config, '_cleanup'):
+        config._cleanup.append(pudb_wrapper.unmount)
+    else:
+        config.add_cleanup(pudb_wrapper.unmount)
 
 
 class PuDBWrapper(object):
